@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Path-Informed CR-SFSS Score & Ferritin AUC0–7</title>
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg2: #0d1118;
+      --panel: rgba(18, 22, 30, 0.88);
+      --panel2: rgba(24, 29, 39, 0.9);
+      --line: rgba(255,255,255,0.08);
+      --line2: rgba(255,255,255,0.06);
+      --text: #eef2f7;
+      --muted: #9aa4b2;
+      --soft: #7f8998;
+      --accent: #80a7ff;
+      --accent2: #9ec5ff;
+      --shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(128,167,255,0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(45,212,191,0.08), transparent 24%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      padding: 20px 16px 28px;
+    }
+    .shell { max-width: 1040px; margin: 0 auto; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .tool { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); overflow:hidden; }
+    .grid { display:grid; grid-template-columns: 1.15fr 0.85fr; }
+    .left, .right { padding:22px; }
+    .left { border-right:1px solid var(--line); }
+    h1 { margin:0 0 12px; font-size:clamp(1.22rem,1.1rem + 0.75vw,1.58rem); line-height:1.08; font-weight:780; }
+    .intro-card { background: var(--panel2); border:1px solid var(--line2); border-radius:18px; padding:14px 15px; color:var(--muted); font-size:.94rem; line-height:1.55; margin-bottom:14px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { background: var(--panel2); border:1px solid var(--line2); border-radius:18px; padding:12px 13px 10px; }
+    .label { display:block; font-size:.73rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-bottom:8px; }
+    input { width:100%; border:none; outline:none; background:transparent; color:var(--text); font-size:1.04rem; font-weight:640; }
+    input::placeholder { color:#667081; font-weight:500; }
+    .unit { margin-top:6px; font-size:.76rem; color:var(--soft); }
+    .actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+    button { appearance:none; border:none; border-radius:14px; padding:12px 17px; font-size:.93rem; font-weight:760; cursor:pointer; }
+    .primary { color:#07111f; background:linear-gradient(135deg,var(--accent2),var(--accent)); }
+    .secondary { color:var(--text); background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); }
+    .right { display:flex; flex-direction:column; justify-content:flex-end; }
+    .stat { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:22px; padding:22px 20px; min-height:176px; display:flex; flex-direction:column; justify-content:center; }
+    .eyebrow { color:var(--muted); font-size:.74rem; text-transform:uppercase; letter-spacing:.11em; margin-bottom:10px; }
+    .value { font-size:clamp(2rem,6vw,3.4rem); line-height:1; letter-spacing:-.05em; font-weight:790; margin:0 0 10px; }
+    .meta { color:var(--muted); font-size:.89rem; line-height:1.6; }
+    .table-wrap { border:1px solid var(--line2); border-radius:18px; overflow:hidden; background:var(--panel2); }
+    table { width:100%; border-collapse:collapse; }
+    thead th { font-size:12px; font-weight:700; color:var(--muted); text-align:left; padding:12px 14px 14px; }
+    tbody td { padding:12px 14px; border-bottom:1px solid var(--line2); font-size:.94rem; }
+    tbody tr:last-child td { border-bottom:none; }
+    .timepoint { font-weight:680; color:var(--text); width:88px; }
+    @media (max-width:880px) {
+      .shell { grid-template-columns:1fr; }
+      .grid { grid-template-columns:1fr; }
+      .left { border-right:none; border-bottom:1px solid var(--line); }
+      .form-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="tool">
+      <div class="grid">
+        <div class="left">
+          <h1>Path-Informed CR-SFSS Association Score</h1>
+          <div class="intro-card">Enter all five variables, then press Calculate.</div>
+          <div class="form-grid">
+            <label class="field">
+              <span class="label">Recipient MELD</span>
+              <input id="meld" type="number" step="0.1" placeholder="e.g. 18" />
+              <div class="unit">score</div>
+            </label>
+            <label class="field">
+              <span class="label">Hemoglobin</span>
+              <input id="hb" type="number" step="0.1" placeholder="e.g. 11.2" />
+              <div class="unit">g/dL</div>
+            </label>
+            <label class="field">
+              <span class="label">Total protein</span>
+              <input id="tp" type="number" step="0.1" placeholder="e.g. 6.1" />
+              <div class="unit">g/dL</div>
+            </label>
+            <label class="field">
+              <span class="label">Donor preAST</span>
+              <input id="dast" type="number" step="0.1" placeholder="e.g. 22" />
+              <div class="unit">U/L</div>
+            </label>
+            <label class="field" style="grid-column:1 / -1;">
+              <span class="label">Blood loss / kg</span>
+              <input id="bleed" type="number" step="0.1" placeholder="e.g. 120" />
+              <div class="unit">mL/kg</div>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="primary" type="button" onclick="calculateScore()">Calculate</button>
+            <button class="secondary" type="button" onclick="resetScore()">Reset</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="stat">
+            <div class="eyebrow">Calculated association score</div>
+            <div class="value" id="scoreValue">--</div>
+            <div class="meta" id="scoreMeta">Press Calculate to display the association score.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tool">
+      <div class="grid">
+        <div class="left">
+          <h1>Ferritin AUC0–7 Calculator</h1>
+          <div class="intro-card">Day 0 should be the ferritin value at reperfusion. Enter only available postoperative values.</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th style="width:88px;">Time point</th><th>Ferritin (ng/mL)</th></tr></thead>
+              <tbody>
+                <tr><td class="timepoint">POD0</td><td><input id="f0" type="number" min="0" step="0.1" placeholder="e.g. 850" /></td></tr>
+                <tr><td class="timepoint">POD1</td><td><input id="f1" type="number" min="0" step="0.1" placeholder="optional" /></td></tr>
+                <tr><td class="timepoint">POD2</td><td><input id="f2" type="number" min="0" step="0.1" placeholder="optional" /></td></tr>
+                <tr><td class="timepoint">POD3</td><td><input id="f3" type="number" min="0" step="0.1" placeholder="optional" /></td></tr>
+                <tr><td class="timepoint">POD5</td><td><input id="f5" type="number" min="0" step="0.1" placeholder="optional" /></td></tr>
+                <tr><td class="timepoint">POD7</td><td><input id="f7" type="number" min="0" step="0.1" placeholder="optional" /></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button class="primary" type="button" onclick="calculateAUC()">Calculate</button>
+            <button class="secondary" type="button" onclick="resetAUC()">Reset</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="stat">
+            <div class="eyebrow">Ferritin AUC0–7</div>
+            <div class="value" id="aucValue">–</div>
+            <div class="meta" id="aucMeta">ng/mL·day</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function calculateScore() {
+      const meld = parseFloat(document.getElementById('meld').value);
+      const hb = parseFloat(document.getElementById('hb').value);
+      const tp = parseFloat(document.getElementById('tp').value);
+      const dast = parseFloat(document.getElementById('dast').value);
+      const bleed = parseFloat(document.getElementById('bleed').value);
+
+      if ([meld, hb, tp, dast, bleed].some(v => Number.isNaN(v))) {
+        document.getElementById('scoreValue').textContent = '--';
+        document.getElementById('scoreMeta').textContent = 'Please enter all five variables.';
+        return;
+      }
+
+      const zMeld = (meld - 15.5977) / 5.6522;
+      const zHb = (hb - 9.0302) / 1.7939;
+      const zTp = (tp - 5.5884) / 0.7921;
+      const zDast = (dast - 17.8721) / 4.7917;
+      const zBleed = (bleed - 143.2174) / 152.0901;
+
+      const score = (1.600243 * zMeld) + (-0.657845 * zHb) + (-0.599321 * zTp) + (1.104418 * zDast) + (1.493167 * zBleed);
+
+      document.getElementById('scoreValue').textContent = score.toFixed(3);
+      document.getElementById('scoreMeta').textContent = 'Relative within-cohort association score.';
+    }
+
+    function resetScore() {
+      ['meld','hb','tp','dast','bleed'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('scoreValue').textContent = '--';
+      document.getElementById('scoreMeta').textContent = 'Press Calculate to display the association score.';
+    }
+
+    function calculateAUC() {
+      const dayPoints = [0,1,2,3,5,7];
+      const vals = ['f0','f1','f2','f3','f5','f7'].map((id, i) => {
+        const raw = document.getElementById(id).value;
+        const v = parseFloat(raw);
+        return raw === '' || Number.isNaN(v) ? null : { day: dayPoints[i], ferritin: v };
+      }).filter(Boolean);
+
+      if (vals.length < 2) {
+        document.getElementById('aucValue').textContent = '--';
+        document.getElementById('aucMeta').textContent = 'Need at least 2 points';
+        return;
+      }
+
+      let auc = 0;
+      for (let i = 0; i < vals.length - 1; i++) {
+        auc += ((vals[i].ferritin + vals[i+1].ferritin) / 2) * (vals[i+1].day - vals[i].day);
+      }
+      document.getElementById('aucValue').textContent = auc.toFixed(1);
+      document.getElementById('aucMeta').textContent = 'ng/mL·day';
+    }
+
+    function resetAUC() {
+      ['f0','f1','f2','f3','f5','f7'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('aucValue').textContent = '–';
+      document.getElementById('aucMeta').textContent = 'ng/mL·day';
+    }
+  </script>
+</body>
+</html>
